@@ -1,0 +1,225 @@
+@startuml
+BaseView <|-- WeeklyPlanView
+BaseView <|-- StorageView
+BaseView <|-- ShoppingListView
+BaseView <|-- RecipeView
+BaseView <|-- OverviewView
+
+WeeklyPlanController --> WeeklyPlanView : updates
+WeeklyPlanController --> WeeklyPlanModel : uses / updates
+WeeklyPlanView --> WeeklyPlanController : forwards user input
+
+WeeklyPlanModel --> RecipeModel : gets data
+RecipeController --> RecipeView : updates
+RecipeController --> RecipeModel : uses
+RecipeView --> RecipeController : forwards user Input
+
+StorageController --> StorageView : updates
+StorageController --> StorageModel : uses / updates
+StorageView --> StorageController : forwards user input
+
+ShoppingListModel --> RecipeModel : gets data
+ShoppingListModel --> StorageModel : gets data
+ShoppingListModel --> WeeklyPlanModel : gets data
+ShoppingListController --> ShoppingListView : updates
+ShoppingListController --> ShoppingListModel : uses / updates
+ShoppingListView --> ShoppingListController : forwards user input
+
+OverviewModel --> WeeklyPlanModel : gets data
+OverviewController --> OverviewView : updates
+OverviewController --> OverviewModel : uses / updates
+OverviewView --> OverviewController : forwards user input
+
+class WeeklyPlanView {
+    - day_dropdowns: dict[str, str]
+    - update_assignment_callback: callable
+
+    + __init__(parent: any)
+    + display_presentation(recipe_list: list[dict]) : 
+    + update_assignment(day: str, recipe_name: str) : 
+    + set_update_assignment_callback(callback: callable) : 
+    + update_day_assignments(day_assignments: dict[str, str]) : 
+    + get_current_week_range() : str
+}
+
+class WeeklyPlanController {
+    - view: WeeklyPlanView
+    - model: WeeklyPlanModel
+    - data_file_path: str
+
+    + __init__(model: WeeklyPlanModel, view: WeeklyPlanView)
+    + update_assignment(day: str, recipe_name: str) : 
+    + run()
+}
+class WeeklyPlanModel {
+    - recipe_model: RecipeModel
+    - assignments: dict[str, str]
+
+    + __init__(recipe_model: RecipeModel)
+    + get_weekly_plan_pool_recipe() : list[dict]
+    + set_day_assignment(day: str, recipe_name: str) : 
+    + get_day_assignments() : dict[str, str]
+    + save_to_json(file_path: str) : 
+    + load_from_json(file_path: str) : 
+}
+
+class StorageView {
+    - add_item_callback: Callable[[str, str], None]
+    - delete_item_callback: Callable[[str], None]
+
+    + __init__(parent: Any)
+    + display_presentation(): 
+    + add_item_popup(): 
+    + display_error(message: str): 
+    + display_storage_data(storage_data: dict[str, int]): 
+    + on_add_button_click(item_name: str, quantity: str): 
+    + set_add_item_callback(callback: Callable[[str, str], None]): None
+    + on_delete_button_click(): 
+    + set_delete_item_callback(callback: Callable[[str], None]): None
+}
+class StorageModel {
+    - storage_data: dict[str, int]
+
+    + __init__()
+    + add_item_to_storage(item_name: str, quantity: int): 
+    + remove_item_from_storage(item_name: str): 
+    + get_storage_list(): list[tuple[str, int]]
+    + save_to_json(file_path: str): 
+    + load_from_json(file_path: str): 
+}
+
+class StorageController {
+    - model: StorageModel
+    - view: StorageView
+    - data_file_path: str
+
+    + __init__(model: StorageModel, view: StorageView)
+    + add_item(item_name: str, quantity: str): 
+    + delete_item(item_name: str): 
+    + load_data(): 
+    + run(): None
+}
+
+class ShoppingListModel {
+    - used_recipes: dict[str, str]
+    - storage_data: dict[str, int]
+    - recipes: list[dict]
+    - shopping_list_data: list[tuple[str, int]]
+    - clipboard_message: str
+
+    + __init__(recipe_model: RecipeModel, storage_model: StorageModel, weeklyplan_model: WeeklyPlanModel)
+    - __generate_shopping_list(used_recipes: dict[str, str], storage_data: dict[str, int], recipes: list[dict]): list[tuple[str, int]]
+    - generate_clipboard_message(): str
+}
+
+class ShoppingListController {
+    - model: ShoppingListModel
+    - view: ShoppingListView
+    - data_file_path: str
+
+    + __init__(model: ShoppingListModel, view: ShoppingListView)
+    + generate_clipboard_message(): 
+    + run(): None
+}
+
+class ShoppingListView {
+    - generate_clipboard_message_callback: Callable[[], None]
+
+    + __init__(parent: Any)
+    + display_presentation(): 
+    + display_shopping_list(shopping_list_data: list[tuple[str, Any]]): 
+    + set_generate_clipboard_message_callback(callback: Callable[[], None]): 
+    + generate_clipboard_message(): 
+}
+
+class OverviewView {
+    + __init__(parent: Any)
+    + display_presentation(): 
+    + get_current_week_range(): str
+    + display_assignments(assignments: dict[str, str]): 
+}
+
+class OverviewController {
+    - model: OverviewModel
+    - view: OverviewView
+
+    + __init__(model: OverviewModel, view: OverviewView)
+    + run(): 
+}
+
+class OverviewModel {
+    - weeklyplan_model: WeeklyPlanModel
+
+    + __init__(weeklyplan_model: WeeklyPlanModel)
+    + get_weekly_overview_recipes(): dict[str, str]
+}
+
+class RecipeView {
+    - add_item_callback: Callable[[str, list, str], None]
+    - delete_item_callback: Callable[[str], None]
+    - add_to_weekly_plan_callback: Callable[[dict], None]
+    - feedback_label: Label
+    - is_recipe_selected: bool
+    - recipe_list: Treeview
+    - add_to_weekly_plan_button: Button
+
+    + __init__(parent: tk.Widget)
+    + display_presentation(): 
+    + __add_recipe_popup(): 
+    + display_recipe_data(recipe_data: List[dict]): 
+    + on_add_button_click(name: str, ingredients: list, link: str): 
+    + set_add_item_callback(callback: Callable[[str, list, str], None]): None
+    + on_delete_button_click(): 
+    + set_delete_item_callback(callback: Callable[[str], None]): None
+    + on_add_to_weekly_plan_click(): 
+    + set_add_to_weeklyplan_callback(callback: Callable[[dict], None]): None
+    + set_feedback_message(message: str): None
+    + clear_feedback_message(): None
+    + on_recipe_list_selection(event: Event): 
+    + update_add_to_weekly_plan_button_state(): None
+}
+
+class RecipeController {
+    - model: RecipeModel
+    - view: RecipeView
+    - data_file_path: str
+
+    + __init__(model: RecipeModel, view: RecipeView)
+    + add_to_Weekly_pool(recipe: dict): 
+    + add_recipe(name: str, ingredients: list, link: str): 
+    + delete_recipe(name: str): 
+    + load_data(): 
+    + run(): 
+}
+
+class RecipeModel {
+    - recipes: list
+    - weekly_plan_pool_recipe: list
+
+    + __init__()
+    + add_recipe_to_weeklyplan_pool(name: str, ingredients: list, link: str): 
+    + get_weekly_plan_pool_recipe(): list
+    + add_recipe(name: str, ingredients: list, link: str): 
+    + remove_recipe(name: str): 
+    + save_to_json(file_path: str): 
+    + load_from_json(file_path: str): 
+}
+
+class BaseView {
+    - parent: tk.Tk
+    + foreground_color: str
+    + background_color: str
+    + header_font: tuple
+    + secondary_font: tuple
+    + secondary_foreground_color: str
+    + button_font: tuple
+    + active_background_color: str
+
+    + __init__(parent: tk.Tk)
+    + center_window(window: tk.Toplevel, width: int, height: int): void
+    + create_label(text: str): tk.Label
+    + create_secondary_label(text: str): tk.Label
+    + create_button(text: str, command: callable=None): tk.Button
+    + create_divider(): ttk.Separator
+}
+@enduml

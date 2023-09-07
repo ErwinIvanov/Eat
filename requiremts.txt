@@ -1,0 +1,2 @@
+Pyperclip
+pillow
